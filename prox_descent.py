@@ -24,7 +24,6 @@ class Base_f_Function (object):
     def value(self):
         raise NotImplementedError("Should have implemented proximal operator")
         
-        
 def default_eta(k):
     return 1  
        
