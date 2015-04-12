@@ -13,11 +13,10 @@ import numpy as np
 
 def get_low_rank_image (rank = 10):
     # load image
-    X = mpimg.imread('Tree-Pictures-hd.jpg')
+    X = mpimg.imread('flower.jpg')
     X = X/255.0
-    Black = X
+    Black = np.sum(X, axis=2)
     
-    Black = X
     
     UR, sigmaR, VR = np.linalg.svd(Black)
     sigmaR[rank:] = 0

@@ -50,7 +50,7 @@ reg_path2 = prox_descent.prox_descent(2*p, f, g, stop, grad_lip_cte)
 f = elanet_new_version.L1_Norm()
 g = elanet_new_version.Scalar_Product(Y)
 operator = elanet_new_version.mult(X)
-reg_path3 = reg_prox_descent.accelerated_reg_prox_descent((2*p,1),(n,1), f, g, operator, alpha, stop, grad_lip_cte, np.zeros((2*p,1)))
+reg_path3, diff = reg_prox_descent.accelerated_reg_prox_descent((2*p,1),(n,1), f, g, operator, alpha, stop, 1/grad_lip_cte, np.zeros((2*p,1)))
 print np.linalg.norm(np.dot(X, reg_path3[:,:,stop-1]) - Y)
 
 """
@@ -61,8 +61,8 @@ for i in range(stop):
 plt.plot(np.log(range(stop)),np.log(a))
 """
 
-#for i in range (stop):
-   # plt.plot(points_ref, np.dot(X_ref, reg_path3[:,:,i]), 'b')
+for i in range (stop):
+   plt.plot(points_ref, np.dot(X_ref, reg_path3[:,:,i]), 'b')
    # plt.plot(points_ref, np.dot(X_ref, reg_path2[:,i]), 'g')
     
 

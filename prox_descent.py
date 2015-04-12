@@ -7,7 +7,6 @@ Created on Thu Mar 26 10:42:58 2015
 """
 
 import numpy as np
-import copy
 
 """ Interface for g function """
 class Base_g_Function (object):
