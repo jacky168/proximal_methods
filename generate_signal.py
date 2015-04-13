@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 
 """ Function to regress. """
 def default_f (X):
-    return np.cos(np.pi*X) + 1.5*np.sin(3*np.pi*X) + X
+    return np.cos(np.pi*X) + 1.5*np.sin(3*np.pi*X) - 2*X + 3*np.exp(X)
 
-def generate (n, p, sigma_noise=0.5, res=10000, f=default_f):
+def generate (n, p, sigma_noise=1, res=10000, f=default_f):
     """ Generates the kernel (cos in the first columns, sin after) """
     points = np.transpose((np.matrix(range(n)) - float(n-1)/2 )/float(n-1) *2) # Type-1 data
     Xbuff = np.dot(points, np.matrix(np.ones(p)))
