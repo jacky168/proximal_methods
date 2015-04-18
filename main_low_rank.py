@@ -9,8 +9,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-import reg_prox_descent
-import low_rank_estimation
+import Algos.reg_prox_descent as reg_prox_descent
+import Functions.low_rank_estimation as low_rank_estimation
 
 # When do you stop ??
 # The epsilon question
@@ -43,33 +43,16 @@ iniRandom = M + np.multiply(1-mask,np.random.normal(size=(dim1,dim2)))
 f = low_rank_estimation.Nuclear_Norm()
 g = low_rank_estimation.Scalar_Product(M)
 proj = low_rank_estimation.Projection_On_Known_Positions(mask)
+comparator = low_rank_estimation.comparator(Mref)
 
 # We can also try with accelerated version. W = whole "regularization path"
-W, diff = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, 
+x, score = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, 
                                             proj, epsilon, 
                                             stop, step_size_multiplier*epsilon, 
-                                            M, ini=M, verbose = True)
+                                            M, comparator = comparator, ini=M, verbose = True,  mode=1)
 
-# Results
-relative_error = np.zeros(stop)
-distance_to_M = np.zeros(stop)
-score = np.zeros(stop)
-for i in range (stop):
-    relative_error[i] = np.linalg.norm(Mref - W[:,:,i]) / np.linalg.norm(Mref)
-    distance_to_M[i] = np.linalg.norm(M - proj.value(W[:,:,i])) / np.linalg.norm(M)
-    
-W, diff = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, 
-                                            proj, epsilon, 
-                                            stop, -1, 
-                                            M, ini=M, verbose = True)
-relative_error2 = np.zeros(stop)
-distance_to_M2 = np.zeros(stop)
-score = np.zeros(stop)
-for i in range (stop):
-    relative_error2[i] = np.linalg.norm(Mref - W[:,:,i]) / np.linalg.norm(Mref)
-    distance_to_M[i] = np.linalg.norm(M - proj.value(W[:,:,i])) / np.linalg.norm(M)
+score = score/np.linalg.norm(Mref)
                                             
-plt.plot(range(stop), np.log(relative_error), 'r')
-plt.plot(range(stop), np.log(relative_error2), 'b')
+plt.plot(range(stop), np.log(score), 'r')
 
 

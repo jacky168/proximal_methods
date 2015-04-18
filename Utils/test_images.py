@@ -13,7 +13,7 @@ import numpy as np
 
 def get_low_rank_image (rank = 10):
     # load image
-    X = mpimg.imread('flower.jpg')
+    X = mpimg.imread('lotus.jpg')
     X = X/255.0
     Black = np.sum(X, axis=2)
     
@@ -24,5 +24,10 @@ def get_low_rank_image (rank = 10):
     np.fill_diagonal(DR, sigmaR)
     DR = np.dot(UR, np.dot(DR,VR))
 
-    plt.imshow(DR,cmap = cm.Greys_r)
     return DR
+    
+def get_black_and_white_image ():
+    X = mpimg.imread('lotus.jpg')
+    X = X/255.0
+    black = np.sum(X, axis=2)
+    return black

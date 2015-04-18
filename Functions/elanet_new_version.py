@@ -9,11 +9,11 @@ Created on Tue Apr  7 12:21:09 2015
 """
 Created on Thu Apr  2 17:42:57 2015
 
-@author: user
+@author: Simon Matet
 """
 
 import numpy as np
-import prox_descent
+import Algos.prox_descent as prox_descent
 
 # "Not smooth" term
 class Scalar_Product (prox_descent.Base_g_Function):
@@ -42,7 +42,7 @@ class L1_Norm (prox_descent.Base_f_Function):
     def moreau_env_dual_value (self, w, alpha):
         return 1/(2*alpha) * np.linalg.norm(np.clip(np.abs(w) - self.mu, 0, np.inf))**2
         
-# Operator that puts unknown positions in a matrix to 0
+# Operator
 class mult:
     Phi = 0
     
@@ -55,3 +55,15 @@ class mult:
         
     def transpose_value (self, M):
         return np.dot(np.transpose(self.Phi), M)
+        
+        
+class comparator():
+    ref = 0
+    kernel = 0
+    
+    def score (self, x):
+        return np.linalg.norm(np.dot(self.kernel, x) - self.ref)
+        
+    def __init__ (self, ref, kernel):
+        self.ref = ref
+        self.kernel = kernel

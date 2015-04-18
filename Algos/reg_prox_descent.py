@@ -15,12 +15,12 @@ Created on Thu Mar 26 10:42:58 2015
 
 import numpy as np
         
-def default_eta(k):
+def constant(k):
     return 1  
        
        
 """  Proximal Descent Method for dual problem :
-     Minimizes dual of f(x) + g(linear_operator(x)) + epsilon/2 * ||x||^2; f convex differentiable ; g convex
+     Minimizes dual of f(x) + g(linear_operator(x)) + epsilon/2 * ||x - z||^2; f convex differentiable ; g convex
      Arguments :
          - p          : integer : number of covariates
          - f function : object with method prox and (and maybe value of dual)
@@ -30,22 +30,33 @@ def default_eta(k):
          - linear_operator : object with method apply
          - epsilon : epsilon
          - stop      : integer : number of iterations
-         - step size : default = -1 for unknown (does a line search, needs f.value)
+         - step size : set -1 for unknown (does a line search, needs f.moreau_env_dual_value)
+         - z
+         - (opional) comparator : object with method score : 
+                                     compares to reference parameters (for benchmarking)
+                                     (default : constant)
          - (optional) eta : averaging factor ; default = 1
          - (optional) ini : initialiation value ; default = 0
-         
+         - (optional) verbose : default False. To see progress
+         - (optional) mode : 0 : normal : returns list of best parameters and list of scores
+                             1 : amnesic : returns list of scores and last set of values
+         returs regularization path (list of best parameters)
 """
 
 
 def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon, 
-                      stop, step_size, z, eta=default_eta,ini=np.zeros(10),
-                      verbose=False):
+                      stop, step_size, z, comparator=constant, eta=constant,ini=np.zeros(10),
+                      verbose=False, mode=0):
     if (ini.all()==0):
         v1 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
     else:
         v1 = ini
             
-    reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
+    if (mode == 0):
+        reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
+        
+    score = np.zeros(stop)
+    x = v1
     
     backtracking = False
     if (step_size < 0):
@@ -58,13 +69,19 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
         if (not backtracking):
             if (i%5 == 0  and verbose):
                 print i
-            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-            current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
+            x = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
+            current_grad = -1 * linear_operator.value(x)        
             v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
+            if (mode == 0):
+                reg_path[:,:,i] = x
+            score[i] = comparator.score(x)
             
         else:
-            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-            current_grad = -1 * linear_operator.value(reg_path[:,:,i])   
+            x = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
+            if (mode == 0):
+                reg_path[:,:,i] = x
+            score[i] = comparator.score(x)
+            current_grad = -1 * linear_operator.value(x)   
             # Could be optimized to remove one call to a prox-like method
             ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(v1), epsilon)
             
@@ -81,13 +98,18 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
         v1 = v2
 
         
-    return reg_path
+    if (mode == 0):
+        return reg_path, score
+    else:
+        return x, score
     
     
-    
+"""
+Same with acceleration
+"""
 def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, 
-                                  epsilon, stop, step_size, z, eta=default_eta,
-                                  ini=np.zeros(10), verbose = False):
+                                  epsilon, stop, step_size, z, comparator=constant,
+                                  eta=constant, ini=np.zeros(10), verbose = False, mode=0):
     if (ini.all()==0):
         v1 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
         v2 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
@@ -96,7 +118,11 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
         v2 = ini
     
     y = v1
-    reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
+    
+    if (mode == 0):
+        reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
+    score = np.zeros(stop)
+    x = v1
     
     backtracking = False
     if (step_size < 0):
@@ -110,13 +136,19 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
             if (i%5 == 0  and verbose):
                 print i            
             # Little approximation which may or may not be right. To check.
-            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
-            current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
+            x = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
+            if (mode == 0):
+                reg_path[:,:,i] = x
+            score[i] = comparator.score(x)
+            current_grad = -1 * linear_operator.value(x)     
             v2 = (1 - eta(i)) * y + eta(i) * g.prox(step_size, y - step_size * current_grad)
             
         else:
-            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
-            current_grad = -1 * linear_operator.value(reg_path[:,:,i])
+            x = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
+            if (mode == 0):
+                reg_path[:,:,i] = x
+            score[i] = comparator.score(x)
+            current_grad = -1 * linear_operator.value(x)
             # Could be optimized to remove one call to a prox-like method
             ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(y), epsilon)
             
@@ -135,4 +167,7 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
         t1 = t2
         v1 = v2
         
-    return reg_path
+    if (mode == 0):
+        return reg_path, score
+    else:
+        return x, score

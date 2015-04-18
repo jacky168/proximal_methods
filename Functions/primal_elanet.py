@@ -8,7 +8,7 @@ Functions for optimization of OLS with Tychonoff elastic net regularization
 """
 
 import numpy as np
-import prox_descent
+import Algos.prox_descent as prox_descent
 
 # Elastic net : beta*|x|_1 + alpha/2 * |x|^2 #
 class ElaNet_Function (prox_descent.Base_g_Function):

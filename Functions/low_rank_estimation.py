@@ -2,11 +2,11 @@
 """
 Created on Thu Apr  2 17:42:57 2015
 
-@author: user
+@author: Simon Matet
 """
 
 import numpy as np
-import prox_descent
+import Algos.prox_descent as prox_descent
 
 # "Not smooth" term
 class Scalar_Product (prox_descent.Base_g_Function):
@@ -45,3 +45,13 @@ class Projection_On_Known_Positions:
         
     def transpose_value (self, M):
         return np.multiply(self.known_positions, M)
+
+
+class comparator():
+    ref = 0
+    
+    def score (self, x):
+        return np.linalg.norm(x - self.ref)
+        
+    def __init__ (self, complete_matrix):
+        self.ref = complete_matrix

@@ -11,16 +11,17 @@ Test file
 import numpy as np
 import matplotlib.pyplot as plt
 
-import generate_signal
-import prox_descent
-import primal_elanet
-import elanet_new_version
-import reg_prox_descent
+import Utils.generate_signal as generate_signal
+import Algos.prox_descent as prox_descent
+import Algos.reg_prox_descent as reg_prox_descent
+import Functions.elanet_new_version as elanet_new_version
+import Functions.primal_elanet as primal_elanet
 
-n=5000
-p=10000
-stop=30
-alpha = 1.0 # Alpha should NOT be an integer (add .0 at the end to avoid rounding)
+
+n=2000
+p=4000
+stop=300
+alpha = .01 # Alpha should NOT be an integer (add .0 at the end to avoid rounding)
 mu = 1.0 # Mu should NOT be an integer (add .0 at the end to avoid rounding)
           # Use mu and set alpha=1.0 for backtracking
 myLambda = 3
@@ -47,30 +48,28 @@ print 'Fista - done'
 f = elanet_new_version.L1_Norm(mu)
 g = elanet_new_version.Scalar_Product(Y)
 operator = elanet_new_version.mult(X)
-reg_path3 = reg_prox_descent.reg_prox_descent((2*p,1),(n,1), f, g, operator,
-                        alpha, stop, -1, np.zeros((2*p,1)))
+comparator = elanet_new_version.comparator(Y_ref, X_ref)
+reg_path3, score3 = reg_prox_descent.reg_prox_descent((2*p,1),(n,1), f, g, operator,
+                        alpha, stop, -1, np.zeros((2*p,1)), comparator=comparator, mode=1)
 print "Primal dual splitting - done"
 
-reg_path1 = reg_prox_descent.accelerated_reg_prox_descent((2*p,1),(n,1), 
-                        f, g, operator, alpha, stop, -1, np.zeros((2*p,1)))
+reg_path1, score1 = reg_prox_descent.accelerated_reg_prox_descent((2*p,1),(n,1), 
+                        f, g, operator, alpha, stop, -1, np.zeros((2*p,1)), comparator=comparator, mode=1)
 print "Accelerated primal dual splitting - done"
 
-score1 = np.zeros(stop)
-score2 = np.zeros(stop)
-score3 = np.zeros(stop)
 
 val1 = np.zeros(stop)
 val2 = np.zeros(stop)
 val3 = np.zeros(stop)
-
+score3 = score3/res
+score1 = score1/res
 
 for i in range (stop):
-    score1[i] = np.linalg.norm(Y_ref - np.dot(X_ref, reg_path1[:,:,i]))/ float(res)
     #score2[i] = np.linalg.norm(Y_ref - np.dot(X_ref, reg_path2[:,:,i])) / float(res)
-    score3[i] = np.linalg.norm(Y_ref - np.dot(X_ref, reg_path3[:,:,i]))/ float(res)
-    val1[i] = np.linalg.norm(Y - np.dot(X, reg_path1[:,:,i]))/ float(n)
+    #val1[i] = np.linalg.norm(Y - np.dot(X, reg_path1[:,:,i]))/ float(n)
     #val2[i] = np.linalg.norm(Y - np.dot(X, reg_path2[:,:,i]))/ float(n)
-    val3[i] = np.linalg.norm(Y - np.dot(X, reg_path3[:,:,i]))/ float(n)
+    #val3[i] = np.linalg.norm(Y - np.dot(X, reg_path3[:,:,i]))/ float(n)
+    
     if (draw_iterates):
         plt.plot(points_ref, np.dot(X_ref, reg_path1[:,:,stop-1-5]), 'y-')
         plt.plot(points_ref, np.dot(X_ref, reg_path3[:,:,stop-1-5]), 'b-')
@@ -82,9 +81,9 @@ if (draw_error):
     #plt.plot(range(stop), score2, 'r', linewidth = 2) 
     plt.plot(range(stop), score3, 'g', linewidth = 2) 
     
-    plt.plot(range(stop), val1, 'y') 
+    #plt.plot(range(stop), val1, 'y') 
     #plt.plot(range(stop), val2, 'r') 
-    plt.plot(range(stop), val3, 'g') 
+    #plt.plot(range(stop), val3, 'g') 
 
 if (draw_functions):
     plt.plot(points_ref, np.dot(X_ref, reg_path3[:,:,stop-1]), 'b', linewidth = 2)
