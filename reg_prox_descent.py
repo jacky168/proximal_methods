@@ -30,14 +30,16 @@ def default_eta(k):
          - linear_operator : object with method apply
          - epsilon : epsilon
          - stop      : integer : number of iterations
-         - step size : default = -1 for unknown (does a line search, need f.value)
+         - step size : default = -1 for unknown (does a line search, needs f.value)
          - (optional) eta : averaging factor ; default = 1
          - (optional) ini : initialiation value ; default = 0
          
 """
 
-# Only works with epsilon = 1
-def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon, stop, step_size, z, eta=default_eta,ini=np.zeros(10)):
+
+def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon, 
+                      stop, step_size, z, eta=default_eta,ini=np.zeros(10),
+                      verbose=False):
     if (ini.all()==0):
         v1 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
     else:
@@ -46,20 +48,54 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon, stop
     reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
     diff = np.zeros(stop)
     
+    backtracking = False
+    if (step_size < 0):
+        backtracking = True
+        backtracking_multiplier = .8
+        step_size = 1000.0
+    
     
     for i in range (stop):
-        if (i%5 == 0):
-            print i
-        reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-        current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
-        v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
-        diff[i] = np.linalg.norm(v2 - v1)
-        v1 = v2     
+        if (not backtracking):
+            if (i%5 == 0  and verbose):
+                print i
+            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
+            current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
+            v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
+            diff[i] = np.linalg.norm(v2 - v1)
+            v1 = v2     
+            
+        else:
+            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
+            current_grad = -1 * linear_operator.value(reg_path[:,:,i])   
+            ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(v1), epsilon)
+            
+            while(True):
+                v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
+                if (f.moreau_env_dual_value(z - linear_operator.transpose_value(v2), epsilon) <= \
+                        ftilde \
+                        + np.sum(np.multiply(v2-v1, current_grad)) \
+                        + 1/(2 * step_size) * np.linalg.norm(v2 - v1)**2):
+                    break
+                else:
+                    step_size = step_size * backtracking_multiplier
+            diff[i] = np.linalg.norm(v2 - v1)
+            v1 = v2
+
         
     return reg_path, diff
     
     
-def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon, stop, step_size, z, eta=default_eta,ini=np.zeros(10)):
+    
+    
+    
+    
+    
+    
+    
+def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, 
+                                  epsilon, stop, step_size, z, eta=default_eta,
+                                  ini=np.zeros(10), verbose = False):
     if (ini.all()==0):
         v1 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
         v2 = np.matrix(np.zeros((dim_dual[0], dim_dual[1])))
@@ -71,7 +107,7 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, e
     diff = np.zeros(stop)
     
     for i in range (stop):
-        if (i%5 == 0):
+        if (i%5 == 0  and verbose):
             print i
         y = v2 + float(i)/float(i+3) * (v2 - v1)
         diff[i] = np.linalg.norm(v2 - v1)

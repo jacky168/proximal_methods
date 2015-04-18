@@ -20,8 +20,8 @@ import low_rank_estimation
 rank = 10
 dim1, dim2 = 1000,1000
 epsilon = 1.0/5/dim1                                                    # Factor in front of the square norm
-noise = .1                                                              # Ratio of noise
-knowledge_ratio = 0.12                                                  # Probability that we know an element
+noise = 1                                                               # Ratio of noise
+knowledge_ratio = 0.5                                                   # Probability that we know an element
 step_size_multiplier = 1/knowledge_ratio                                # Because. Ask me.
 stop = int(np.power(1/noise/epsilon/step_size_multiplier, 2.0/3.0))     # Number of iterations (upper bound from theory)
 stop = 100
@@ -45,7 +45,10 @@ g = low_rank_estimation.Scalar_Product(M)
 proj = low_rank_estimation.Projection_On_Known_Positions(mask)
 
 # We can also try with accelerated version. W = whole "regularization path"
-W, diff = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, proj, epsilon, stop, step_size_multiplier*epsilon, M, ini=M)
+W, diff = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, 
+                                            proj, epsilon, 
+                                            stop, step_size_multiplier*epsilon, 
+                                            M, ini=M, verbose = True)
 
 # Results
 relative_error = np.zeros(stop)

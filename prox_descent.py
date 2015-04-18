@@ -80,7 +80,6 @@ def accelerated_prox_descent (p, f, g, stop, step_size=-1, eta=default_eta,ini=0
         step_size = 1000
     for i in range (stop):
         y = v2 + float(i)/float(i+3) * (v2 - v1)
-        print np.sum(np.abs((v2 - v1)))
         v1 = v2
         
         current_grad = f.grad(y)

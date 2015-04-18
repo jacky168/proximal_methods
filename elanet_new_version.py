@@ -26,14 +26,21 @@ class Scalar_Product (prox_descent.Base_g_Function):
     def prox (self , mu, v):
         return v - mu*self.Y
 
-# Smooth term
+# Smooth term \mu * |.|_1
 class L1_Norm (prox_descent.Base_f_Function):
-    def prox (self, mu, W):        
-        return np.clip(W - 1, 0, np.inf) + np.clip(W+1, -1*np.inf, 0)
+    mu = 1
+    
+    def prox (self, gamma, W):        
+        return np.clip(W - self.mu*gamma, 0, np.inf) + np.clip(W+self.mu*gamma, -1*np.inf, 0)
         
+    def __init__(self, mu):
+            self.mu = mu
             
     def dual_value (self, w):
         return -1 # Not implemented
+        
+    def moreau_env_dual_value (self, w, alpha):
+        return 1/(2*alpha) * np.linalg.norm(np.clip(np.abs(w) - self.mu, 0, np.inf))**2
         
 # Operator that puts unknown positions in a matrix to 0
 class mult:

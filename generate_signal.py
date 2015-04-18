@@ -21,7 +21,6 @@ def generate (n, p, sigma_noise=1, res=10000, f=default_f):
     
     """ Generates the observations """
     Y = f(points) + np.transpose(np.matrix(np.random.normal(loc=0.0, scale=sigma_noise, size=n)))
-    plt.plot(points, Y, 'ro')
     
     """ Plots reference function (with higher resolution) """
     points_ref = np.transpose((np.matrix(range(res)) - float(res-1)/2 )/float(res-1) *2)
