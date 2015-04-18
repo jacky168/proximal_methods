@@ -41,29 +41,34 @@ def default_eta(k):
          - (optional) eta : averaging factor ; default = 1
          - (optional) ini : initialiation value ; default = 0
 """
-def prox_descent (p, f, g, stop, step_size, eta=default_eta,ini=0):
+def prox_descent (p, f, g, stop, step_size=-1, eta=default_eta,ini=0):
     if (ini==0):
        v1 = np.transpose(np.matrix(np.zeros(p)))
     else:
         v1 = ini
-            
-    reg_path = np.matrix(np.zeros((p, stop)))
+        
+    backtracking = False
     if (step_size < 0):
-        step_size = 1000
+        backtracking = True
+        step_size = 100
+            
+    reg_path = np.zeros((p, 1, stop))
     for i in range (stop):
         current_grad = f.grad(v1)
-        if (step_size >= 0): # If we know the lipschitz constante
+        if (not backtracking): # If we know the lipschitz constante
             v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
         else: # If we don't : Line search ; to be implemented ; not working for now
             current_f_value = f.value(v1)
             while (True):
                 v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
-                if (f.value(v2) <= current_f_value + np.dot(np.transpose(current_grad), v2 - v1) + 1/2/step_size * np.linalg.norm(v1 - v2)**2):
+                if (f.value(v2) <= current_f_value \
+                        + np.dot(np.transpose(current_grad), v2 - v1) \
+                        + 1/2/step_size * np.linalg.norm(v1 - v2)**2):
                     break
                 else:
                     step_size = step_size * 0.8
         v1 = v2     
-        reg_path[:,i] = v1
+        reg_path[:,:,i] = v1
         
     return reg_path
     

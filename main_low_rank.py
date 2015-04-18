@@ -57,33 +57,19 @@ score = np.zeros(stop)
 for i in range (stop):
     relative_error[i] = np.linalg.norm(Mref - W[:,:,i]) / np.linalg.norm(Mref)
     distance_to_M[i] = np.linalg.norm(M - proj.value(W[:,:,i])) / np.linalg.norm(M)
-plt.plot(range(stop), np.log(relative_error))
-
-
-
-# Various codes for results
-"""
-score = np.zeros(8)
-for j in range(8):
-    W, diff = reg_prox_descent.accelerated_reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, proj, epsilon, stop, 2*(j+1)*epsilon, M, ini=M)
-    relative_error2 = np.zeros(stop)
-    distance_to_M2 = np.zeros(stop)
-    score2 = np.zeros(stop)
-    for i in range (stop):
-        relative_error2[i] = np.linalg.norm(Mref - W[:,:,i]) / np.linalg.norm(Mref)
-        distance_to_M2[i] = np.linalg.norm(M - proj.value(W[:,:,i])) / np.linalg.norm(M)
     
-       
-    #plt.plot(range(stop), np.log(relative_error), 'b')
-    plt.plot(range(stop), np.log(relative_error2))
-    
-    score[j] = relative_error2[stop-1]
-"""
+W, diff = reg_prox_descent.reg_prox_descent((dim1, dim2),(dim1, dim2), f, g, 
+                                            proj, epsilon, 
+                                            stop, -1, 
+                                            M, ini=M, verbose = True)
+relative_error2 = np.zeros(stop)
+distance_to_M2 = np.zeros(stop)
+score = np.zeros(stop)
+for i in range (stop):
+    relative_error2[i] = np.linalg.norm(Mref - W[:,:,i]) / np.linalg.norm(Mref)
+    distance_to_M[i] = np.linalg.norm(M - proj.value(W[:,:,i])) / np.linalg.norm(M)
+                                            
+plt.plot(range(stop), np.log(relative_error), 'r')
+plt.plot(range(stop), np.log(relative_error2), 'b')
 
 
-"""
-plt.plot(range(stop), norms, 'b')
-plt.plot(range(stop), norms2, 'r')
-plt.plot(range(stop), relative_error, 'g')
-print relative_error
-"""

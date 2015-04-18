@@ -46,13 +46,12 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
         v1 = ini
             
     reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
-    diff = np.zeros(stop)
     
     backtracking = False
     if (step_size < 0):
         backtracking = True
-        backtracking_multiplier = .8
-        step_size = 1000.0
+        backtracking_multiplier = .5
+        step_size = 1.0
     
     
     for i in range (stop):
@@ -62,12 +61,11 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
             reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
             current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
             v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
-            diff[i] = np.linalg.norm(v2 - v1)
-            v1 = v2     
             
         else:
             reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
             current_grad = -1 * linear_operator.value(reg_path[:,:,i])   
+            # Could be optimized to remove one call to a prox-like method
             ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(v1), epsilon)
             
             while(True):
@@ -79,17 +77,11 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
                     break
                 else:
                     step_size = step_size * backtracking_multiplier
-            diff[i] = np.linalg.norm(v2 - v1)
-            v1 = v2
+                
+        v1 = v2
 
         
-    return reg_path, diff
-    
-    
-    
-    
-    
-    
+    return reg_path
     
     
     
@@ -102,20 +94,45 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
     else:
         v1 = ini
         v2 = ini
-            
-    reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))      
-    diff = np.zeros(stop)
+    
+    y = v1
+    reg_path = np.zeros((dim_primal[0], dim_primal[1], stop))
+    
+    backtracking = False
+    if (step_size < 0):
+        backtracking = True
+        backtracking_multiplier = .5
+        step_size = 1.0
+    t1 = 1.0
     
     for i in range (stop):
-        if (i%5 == 0  and verbose):
-            print i
-        y = v2 + float(i)/float(i+3) * (v2 - v1)
-        diff[i] = np.linalg.norm(v2 - v1)
+        if (not backtracking):
+            if (i%5 == 0  and verbose):
+                print i            
+            # Little approximation which may or may not be right. To check.
+            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
+            current_grad = -1 * linear_operator.value(reg_path[:,:,i])        
+            v2 = (1 - eta(i)) * y + eta(i) * g.prox(step_size, y - step_size * current_grad)
+            
+        else:
+            reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(y)/epsilon)
+            current_grad = -1 * linear_operator.value(reg_path[:,:,i])
+            # Could be optimized to remove one call to a prox-like method
+            ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(y), epsilon)
+            
+            while(True):
+                v2 = (1 - eta(i)) * y + eta(i) * g.prox(step_size, y - step_size * current_grad)
+                if (f.moreau_env_dual_value(z - linear_operator.transpose_value(v2), epsilon) <= \
+                        ftilde \
+                        + np.sum(np.multiply(v2-y, current_grad)) \
+                        + 1.0/(2.0 * step_size) * np.linalg.norm(v2 - y)**2):
+                    break
+                else:
+                    step_size = step_size * backtracking_multiplier
+                    
+        t2 = (1.0 + np.sqrt(1.0 + 4.0*t1**2.0))/2.0
+        y = v2 + (t1 - 1.0) / t2 * (v2 - v1) 
+        t1 = t2
         v1 = v2
-        reg_path[:,:,i] = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-        current_grad = -1 * linear_operator.value(reg_path[:,:,i])
         
-        v2 = (1 - eta(i)) * y + eta(i) * g.prox(step_size, y - step_size * current_grad)
-        
-        
-    return reg_path, diff
+    return reg_path
