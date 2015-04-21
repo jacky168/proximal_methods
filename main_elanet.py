@@ -18,10 +18,10 @@ import Functions.elanet_new_version as elanet_new_version
 import Functions.primal_elanet as primal_elanet
 
 
-n=2000
-p=4000
-stop=300
-alpha = .01 # Alpha should NOT be an integer (add .0 at the end to avoid rounding)
+n=300
+p=500
+stop=100
+alpha = 0.1 # Alpha should NOT be an integer (add .0 at the end to avoid rounding)
 mu = 1.0 # Mu should NOT be an integer (add .0 at the end to avoid rounding)
           # Use mu and set alpha=1.0 for backtracking
 myLambda = 3
@@ -81,9 +81,9 @@ if (draw_error):
     #plt.plot(range(stop), score2, 'r', linewidth = 2) 
     plt.plot(range(stop), score3, 'g', linewidth = 2) 
     
-    #plt.plot(range(stop), val1, 'y') 
+    plt.plot(range(stop), val1, 'y') 
     #plt.plot(range(stop), val2, 'r') 
-    #plt.plot(range(stop), val3, 'g') 
+    plt.plot(range(stop), val3, 'g') 
 
 if (draw_functions):
     plt.plot(points_ref, np.dot(X_ref, reg_path3[:,:,stop-1]), 'b', linewidth = 2)

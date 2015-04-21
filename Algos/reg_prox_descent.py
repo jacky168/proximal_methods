@@ -17,6 +17,8 @@ import numpy as np
         
 def constant(k):
     return 1  
+    
+stop_threshold = 1.5
        
        
 """  Proximal Descent Method for dual problem :
@@ -64,24 +66,27 @@ def reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator, epsilon,
         backtracking_multiplier = .5
         step_size = 1.0
     
+    minimum = np.inf
+    
     
     for i in range (stop):
-        if (not backtracking):
-            if (i%5 == 0  and verbose):
-                print i
-            x = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-            current_grad = -1 * linear_operator.value(x)        
-            v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
-            if (mode == 0):
+        if (i%5 == 0  and verbose):
+            print i
+        x = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
+        current_grad = -1 * linear_operator.value(x) 
+        if (mode == 0):
                 reg_path[:,:,i] = x
-            score[i] = comparator.score(x)
+        score[i] = comparator.score(x)
+        
+        if (score[i] < minimum):
+            minimum = score[i]           
+        if ((score[i] - minimum)/minimum > stop_threshold):
+            break
+
+        if (not backtracking):
+            v2 = (1 - eta(i)) * v1 + eta(i) * g.prox(step_size, v1 - step_size * current_grad)
             
         else:
-            x = f.prox(1/epsilon, z - linear_operator.transpose_value(v1)/epsilon)
-            if (mode == 0):
-                reg_path[:,:,i] = x
-            score[i] = comparator.score(x)
-            current_grad = -1 * linear_operator.value(x)   
             # Could be optimized to remove one call to a prox-like method
             ftilde = f.moreau_env_dual_value(z - linear_operator.transpose_value(v1), epsilon)
             
@@ -130,6 +135,7 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
         backtracking_multiplier = .5
         step_size = 1.0
     t1 = 1.0
+    minimum = np.inf
     
     for i in range (stop):
         if (not backtracking):
@@ -166,6 +172,11 @@ def accelerated_reg_prox_descent (dim_primal, dim_dual, f, g, linear_operator,
         y = v2 + (t1 - 1.0) / t2 * (v2 - v1) 
         t1 = t2
         v1 = v2
+        
+        if (score[i] < minimum):
+            minimum = score[i]           
+        if ((score[i] - minimum)/minimum > stop_threshold):
+            break
         
     if (mode == 0):
         return reg_path, score

@@ -6,6 +6,7 @@ Created on Sun Apr 12 14:42:12 2015
 """
 
 import numpy as np
+import copy
 import Algos.prox_descent as prox_descent
 
 """
@@ -52,15 +53,33 @@ class isotropic (prox_descent.Base_f_Function):
     def moreau_env_dual_value (self, w, alpha):
         return -1
  
+ # Anisotropic versio (not that the other one is really isotropic)
+class anisotropic (prox_descent.Base_f_Function):
+    mu = 1
+    
+    def prox (self, gamma, W):
+        n = W.shape[0]/3
+        mon_prox = copy.deepcopy(W)
+        mon_prox[n:,:] = np.clip(mon_prox[n:,:] - self.mu*gamma, 0, np.inf) + np.clip(mon_prox[n:,:]+self.mu*gamma, -1*np.inf, 0)
+        return mon_prox
+        
+    def __init__(self, mu):
+            self.mu = mu
+        
+    # Not implemented (we know the lip constante)
+    def moreau_env_dual_value (self, w, alpha):
+        return -1
+ 
 # (  Id , 0 )
 # (-Grad, Id)       
 class operator():
     def value (self, M):
+        valeur = copy.deepcopy(M)
         n = M.shape[0]/3
         p = M.shape[1]
-        result = M
-        result[n:2*n -1,:] = result[n:2*n -1,:] -M[1:n,:] + M[0:n-1,:]
-        result[2*n:,:p-1] = result[2*n:,:p-1] -M[:n,1:p] + M[:n,0:p-1]
+        result = valeur
+        result[n:2*n -1,:] = result[n:2*n -1,:] -valeur[1:n,:] + valeur[0:n-1,:]
+        result[2*n:,:p-1] = result[2*n:,:p-1] -valeur[:n,1:p] + valeur[:n,0:p-1]
                 
         
         return result
@@ -69,11 +88,12 @@ class operator():
     def transpose_value (self, W):
         n = W.shape[0]/3
         p = W.shape[1]
-        result = W
-        result[:n-1,:] = result[:n-1,:] + W[n:2*n-1,:]
-        result[1:n,:] = result[1:n,:] - W[n:2*n-1,:]
-        result[:n,:p-1] = result[:n,:p-1] + W[2*n:,:p-1]
-        result[:n,1:p] = result[:n,1:p] - W[2*n:,:p-1]       
+        valeur = copy.deepcopy(W)
+        result = valeur
+        result[:n-1,:] = result[:n-1,:] + valeur[n:2*n-1,:]
+        result[1:n,:] = result[1:n,:] - valeur[n:2*n-1,:]
+        result[:n,:p-1] = result[:n,:p-1] + valeur[2*n:,:p-1]
+        result[:n,1:p] = result[:n,1:p] - valeur[2*n:,:p-1]       
         
         return result
    

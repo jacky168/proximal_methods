@@ -14,11 +14,11 @@ import Algos.reg_prox_descent as reg_prox_descent
 import Utils.test_images as test_images
 
 
-noise_level = 0.5
-mu = 1.0
-alpha = 1.0
-stop = 100
-step_size = alpha/16
+noise_level = 2.0
+mu = 100.0
+alpha = 0.0000001
+stop = 2000
+step_size = alpha/25
 
 
 clean_image = test_images.get_black_and_white_image()
@@ -28,19 +28,35 @@ n,p = clean_image.shape
 noise = np.random.normal(scale=noise_level, size = clean_image.shape)
 noisy_image = clean_image + noise
 
+extended_image = np.zeros((noisy_image.shape[0] *3, noisy_image.shape[1]))
+extended_image[:noisy_image.shape[0], :noisy_image.shape[1]] = noisy_image
+
+operator = denoising.operator()
+f = denoising.anisotropic(mu)
+g = denoising.Scalar_Product (extended_image)
+comparator = denoising.comparator(clean_image)
+
 z = np.zeros((noisy_image.shape[0] *3, noisy_image.shape[1]))
 z[:noisy_image.shape[0], :noisy_image.shape[1]] = noisy_image
 
-operator = denoising.operator()
-f = denoising.isotropic(mu)
-g = denoising.Scalar_Product (z)
-comparator = denoising.comparator(clean_image)
-
-x, score = reg_prox_descent.reg_prox_descent((3*n, p), (3*n, p), f, g, operator, alpha, 
+x, score = reg_prox_descent.accelerated_reg_prox_descent((3*n, p), (3*n, p), f, g, operator, alpha, 
                                       stop, step_size, z, comparator = comparator, verbose=True, 
                                       mode=1)
-                             
+                        
     
 plt.plot(range(stop), score, 'b')
 plt.plot(range(stop), np.linalg.norm(clean_image - noisy_image) * np.ones(stop), 'r', linewidth = 3)
-plt.imshow(x[:n,:],cmap = cm.Greys_r)
+#plt.imshow(x[:n,:],cmap = cm.Greys_r)
+
+def image():
+    plt.imshow(x[:n,:],cmap = cm.Greys_r)
+
+def plot():
+    plt.plot(range(stop), score, 'b')
+    plt.plot(range(stop), np.linalg.norm(clean_image - noisy_image) * np.ones(stop), 'r', linewidth = 3)
+    
+def noisy():
+    plt.imshow(noisy_image,cmap = cm.Greys_r)
+
+def clear():
+    plt.imshow(clean_image,cmap = cm.Greys_r)
