@@ -40,7 +40,7 @@ class isotropic (prox_descent.Base_f_Function):
     
     def prox (self, gamma, W):
         n = W.shape[0]/3
-        result = np.deepcopy(W)
+        result = copy.deepcopy(W)
         proj = np.zeros(W.shape)
     
         divide = np.clip(np.sqrt(np.square(W[n:2*n,:]) + np.square(W[2*n:3*n,:])) * (gamma*self.mu), 1, np.inf)       
