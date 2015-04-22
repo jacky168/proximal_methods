@@ -13,7 +13,7 @@ import numpy as np
 
 def get_low_rank_image (rank = 10):
     # load image
-    X = mpimg.imread('lotus.jpg')
+    X = mpimg.imread('lena.bmp')
     X = X/255.0
     Black = np.sum(X, axis=2)
     

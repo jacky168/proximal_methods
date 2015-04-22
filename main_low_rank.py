@@ -17,14 +17,14 @@ import Functions.low_rank_estimation as low_rank_estimation
 # The initialization enigma
 # The step_size_multiplier conundrum
 
-rank = 10
+rank = 50
 dim1, dim2 = 1000,1000
 epsilon = 1.0/5/dim1                                                    # Factor in front of the square norm
-noise = 1                                                               # Ratio of noise
-knowledge_ratio = 0.5                                                   # Probability that we know an element
-step_size_multiplier = 1/knowledge_ratio                                # Because. Ask me.
-stop = int(np.power(1/noise/epsilon/step_size_multiplier, 2.0/3.0))     # Number of iterations (upper bound from theory)
-stop = 100
+noise = 0.5                                                              # Ratio of noise
+knowledge_ratio = 0.39                                                   # Probability that we know an element
+step_size_multiplier = 1.2/knowledge_ratio                                # Because. Ask me.
+#stop = int(np.power(1/noise/epsilon/step_size_multiplier, 2.0/3.0))     # Number of iterations (upper bound from theory)
+stop = 150
 print stop
 
 # Creates the matrix
@@ -33,7 +33,7 @@ B = np.random.normal(0.0, 1.0, (rank,dim2))
 Mref = np.dot(A,B)
 
 # Sampling + noise
-M = Mref + np.random.normal(loc=0.0, scale = noise, size = (dim1, dim2))
+M = Mref #+ np.random.normal(loc=0.0, scale = noise, size = (dim1, dim2))
 mask = np.random.binomial(1,knowledge_ratio,size=(dim1,dim2))
 M = np.multiply(M, mask)
 
